@@ -1,26 +1,30 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - "CI"
+    types:
+      - completed
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: niraj-mx07/devops-k8s-cicd-platform
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   build-and-push:
     name: Build and Push to GHCR
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout exact commit
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -28,7 +32,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,5 +42,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/niraj-mx07/devops-k8s-cicd-platform:latest
+            ghcr.io/niraj-mx07/devops-k8s-cicd-platform:${{ github.event.workflow_run.head_sha }}
