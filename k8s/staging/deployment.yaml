@@ -21,10 +21,13 @@ spec:
         environment: staging
 
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+
       containers:
         - name: devops-task-api
-          image: devops-task-api:latest
-          imagePullPolicy: Never
+          image: ghcr.io/niraj-mx07/devops-k8s-cicd-platform:latest
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 8080
